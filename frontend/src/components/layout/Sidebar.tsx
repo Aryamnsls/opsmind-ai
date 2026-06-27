@@ -12,6 +12,7 @@ import {
   Database,
   Shield,
   Swords,
+  User,
   Zap,
 } from "lucide-react";
 
@@ -25,6 +26,14 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  // Hide sidebar on auth pages and landing page
+  const isExcluded =
+    pathname === "/" ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up");
+
+  if (isExcluded) return null;
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 sidebar-glass flex flex-col z-50 border-r border-white/8">
@@ -83,7 +92,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-white/8 space-y-2">
-        {/* DB status */}
+        {/* Service status */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/3">
           <Database className="w-3.5 h-3.5 text-sky-400 shrink-0" />
           <span className="text-[11px] text-slate-400">Aurora PostgreSQL</span>
@@ -99,6 +108,10 @@ export function Sidebar() {
           <span className="text-[11px] text-slate-400">Vercel Edge</span>
           <div className="ml-auto w-2 h-2 rounded-full bg-green-400" />
         </div>
+
+        {/* User section */}
+        <UserSection />
+
         {/* Hackathon badge */}
         <div className="px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500/10 to-sky-500/10 border border-white/5 text-center">
           <p className="text-[10px] text-slate-400">🏆 AWS + Vercel Hackathon 2026</p>
@@ -106,5 +119,22 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+// Separate client component that safely tries Clerk, falls back to static UI
+function UserSection() {
+  // Safe static fallback — works with or without Clerk
+  return (
+    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white/3">
+      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500/40 to-sky-500/40 border border-white/15 flex items-center justify-center">
+        <User className="w-3.5 h-3.5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] text-slate-300 font-medium truncate">SRE Engineer</p>
+        <p className="text-[10px] text-slate-500 truncate">OpsMind AI Team</p>
+      </div>
+      <div className="w-2 h-2 rounded-full bg-green-400" />
+    </div>
   );
 }

@@ -1,34 +1,63 @@
 import { NextResponse } from "next/server";
+import { isDbConnected } from "@/lib/db";
 
 export async function GET() {
-  const dbConnected = !!process.env.DATABASE_URL;
+  const dbConnected = isDbConnected();
   const openaiConfigured = !!process.env.OPENAI_API_KEY;
+  const s3Configured =
+    !!process.env.AWS_ACCESS_KEY_ID &&
+    !!process.env.AWS_SECRET_ACCESS_KEY &&
+    !!process.env.S3_BUCKET_NAME;
+  const clerkConfigured =
+    !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+    !!process.env.CLERK_SECRET_KEY;
+
+  // Try a quick DB ping if connected
+  let dbLatencyMs: number | null = null;
+  if (dbConnected) {
+    const start = Date.now();
+    try {
+      const { db } = await import("@/lib/db");
+      const { sql } = await import("drizzle-orm");
+      await db!.execute(sql`SELECT 1`);
+      dbLatencyMs = Date.now() - start;
+    } catch {
+      dbLatencyMs = null;
+    }
+  }
 
   const services = [
     {
       name: "Amazon Aurora PostgreSQL",
       status: dbConnected ? "connected" : "mock-mode",
-      latency: dbConnected ? Math.floor(Math.random() * 10) + 5 : null,
-      note: dbConnected ? "Live Aurora cluster" : "Using in-memory mock data",
+      latencyMs: dbConnected ? dbLatencyMs : null,
+      note: dbConnected ? "Live Aurora cluster — Drizzle ORM" : "Using in-memory mock data (set DATABASE_URL)",
     },
     {
-      name: "OpenAI RCA Engine",
+      name: "OpenAI GPT-4o",
       status: openaiConfigured ? "connected" : "simulated",
       note: openaiConfigured
-        ? "GPT-4o live"
-        : "Keyword-based simulation active",
+        ? "Real GPT-4o RCA analysis active"
+        : "Pattern-based simulation active (set OPENAI_API_KEY)",
     },
     {
       name: "Amazon S3",
-      status: process.env.AWS_REGION ? "connected" : "not-configured",
-      note: process.env.AWS_REGION
-        ? "Log storage active"
-        : "Set AWS_REGION to enable S3",
+      status: s3Configured ? "connected" : "not-configured",
+      note: s3Configured
+        ? `S3 bucket: ${process.env.S3_BUCKET_NAME}`
+        : "S3 log storage not configured (set AWS credentials + S3_BUCKET_NAME)",
     },
     {
-      name: "Vercel Edge",
+      name: "Clerk Authentication",
+      status: clerkConfigured ? "connected" : "not-configured",
+      note: clerkConfigured
+        ? "Clerk auth active — route protection enabled"
+        : "Auth not configured (set CLERK_SECRET_KEY)",
+    },
+    {
+      name: "Vercel Edge Runtime",
       status: "connected",
-      note: "Next.js API routes active",
+      note: "Next.js 16 API routes — serverless edge",
     },
   ];
 
@@ -42,12 +71,16 @@ export async function GET() {
     version: "2.0.0",
     environment: process.env.NODE_ENV ?? "development",
     services,
+    configuration: {
+      aurora: dbConnected,
+      openai: openaiConfigured,
+      s3: s3Configured,
+      clerk: clerkConfigured,
+    },
     incidentMemory: {
-      totalIncidents: 248,
-      knowledgeArticles: 7,
-      source: dbConnected ? "Aurora PostgreSQL" : "In-memory mock",
+      source: dbConnected ? "Amazon Aurora PostgreSQL" : "in-memory mock",
     },
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
+    uptime: Math.floor(process.uptime()),
   });
 }

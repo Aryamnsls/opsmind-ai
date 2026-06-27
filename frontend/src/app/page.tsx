@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 
+
 const TAGLINES = [
   "Your Infrastructure Forgets Nothing.",
   "Find Root Causes in Seconds.",
@@ -174,6 +175,7 @@ export default function HomePage() {
               Create Incident
             </Link>
           </div>
+
 
           {/* Stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">

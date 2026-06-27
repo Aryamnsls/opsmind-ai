@@ -293,3 +293,14 @@
 .bg-status-high { background-color: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); }
 .bg-status-medium { background-color: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.2); }
 .bg-status-low { background-color: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); }
+
+/* Sidebar layout offset — applied when sidebar is visible */
+.sidebar-offset {
+  margin-left: 0;
+}
+
+/* Pages with sidebar get ml-64 via the body flex layout */
+body > div:last-child {
+  flex: 1;
+  min-width: 0;
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { MainContent } from "@/components/layout/MainContent";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,19 +23,35 @@ export const metadata: Metadata = {
   authors: [{ name: "OpsMind AI Team" }],
 };
 
+// Clerk is OPTIONAL — only wrap with ClerkProvider when valid keys exist
+const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const CLERK_ENABLED =
+  typeof CLERK_KEY === "string" &&
+  CLERK_KEY.length > 10 &&
+  !CLERK_KEY.includes("your-clerk") &&
+  !CLERK_KEY.includes("pk_test_your");
+
+async function ClerkWrapper({ children }: { children: React.ReactNode }) {
+  if (CLERK_ENABLED) {
+    const { ClerkProvider } = await import("@clerk/nextjs");
+    return <ClerkProvider>{children}</ClerkProvider>;
+  }
+  return <>{children}</>;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen flex bg-background text-foreground antialiased">
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 ml-64">
-          {children}
-        </div>
-      </body>
-    </html>
+    <ClerkWrapper>
+      <html lang="en" className={`${inter.variable} ${geistMono.variable}`}>
+        <body className="min-h-screen flex bg-background text-foreground antialiased">
+          <Sidebar />
+          <MainContent>{children}</MainContent>
+        </body>
+      </html>
+    </ClerkWrapper>
   );
 }
