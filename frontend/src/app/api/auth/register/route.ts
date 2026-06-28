@@ -48,24 +48,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Upload image to S3
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: s3Key,
-        Body: buffer,
-        ContentType: "image/jpeg",
-      })
-    );
+    // 2. Upload image to S3 (Skipped to avoid bucket errors)
+    // We will just pass the Bytes directly to Rekognition!
 
     // 3. Index face in Rekognition
     const indexCommand = new IndexFacesCommand({
       CollectionId: COLLECTION_ID,
       Image: {
-        S3Object: {
-          Bucket: BUCKET_NAME,
-          Name: s3Key,
-        },
+        Bytes: buffer,
       },
       ExternalImageId: imageId,
       MaxFaces: 1,
