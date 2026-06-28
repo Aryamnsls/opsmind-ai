@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Grab user for owner info
     let ownerName = "System Scanner";
-    if (userId) {
+    if (userId && db) {
       const u = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       if (u.length > 0) ownerName = u[0].name;
     }
@@ -58,38 +58,44 @@ export async function POST(req: NextRequest) {
     const serviceName = new URL(url).hostname;
 
     // 1. Insert Incident
-    await db.insert(incidents).values({
-      id: incidentId,
-      title: `[${serviceName}] ${scenario.title}`,
-      description: scenario.description,
-      severity: "critical",
-      status: "investigating",
-      environment: "production",
-      owner: ownerName,
-      service: serviceName,
-      tags: scenario.tags,
-    });
+    if (db) {
+      await db.insert(incidents).values({
+        id: incidentId,
+        title: `[${serviceName}] ${scenario.title}`,
+        description: scenario.description,
+        severity: "critical",
+        status: "investigating",
+        environment: "production",
+        owner: ownerName,
+        service: serviceName,
+        tags: scenario.tags,
+      });
+    }
 
     // 2. Insert Incident DNA
-    await db.insert(incidentDna).values({
-      incidentId: incidentId,
-      fingerprint: `DNA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-      errorSignatures: scenario.errorSignatures,
-      serviceName: serviceName,
-      cpuUsage: Math.floor(Math.random() * 40) + 60, // 60-100%
-      memoryUsage: Math.floor(Math.random() * 40) + 60,
-      networkUsage: Math.floor(Math.random() * 1000) + 500,
-      similarityScore: Math.floor(Math.random() * 15) + 80, // 80-95%
-    });
+    if (db) {
+      await db.insert(incidentDna).values({
+        incidentId: incidentId,
+        fingerprint: `DNA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        errorSignatures: scenario.errorSignatures,
+        serviceName: serviceName,
+        cpuUsage: Math.floor(Math.random() * 40) + 60, // 60-100%
+        memoryUsage: Math.floor(Math.random() * 40) + 60,
+        networkUsage: Math.floor(Math.random() * 1000) + 500,
+        similarityScore: Math.floor(Math.random() * 15) + 80, // 80-95%
+      });
+    }
 
     // 3. Insert RCA Report
-    await db.insert(rcaReports).values({
-      incidentId: incidentId,
-      rootCause: scenario.rootCause,
-      confidence: Math.floor(Math.random() * 15) + 85,
-      resolution: scenario.resolution,
-      prevention: "Implement synthetic monitoring and automated rollback alarms.",
-    });
+    if (db) {
+      await db.insert(rcaReports).values({
+        incidentId: incidentId,
+        rootCause: scenario.rootCause,
+        confidence: Math.floor(Math.random() * 15) + 85,
+        resolution: scenario.resolution,
+        prevention: "Implement synthetic monitoring and automated rollback alarms.",
+      });
+    }
 
     return NextResponse.json({ success: true, incidentId });
   } catch (error: any) {

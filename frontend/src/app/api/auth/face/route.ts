@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         const match = response.FaceMatches[0];
         const faceId = match.Face?.FaceId;
 
-        if (faceId) {
+        if (faceId && db) {
           const foundUsers = await db.select().from(users).where(eq(users.faceId, faceId)).limit(1);
 
           if (foundUsers.length > 0) {

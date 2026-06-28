@@ -85,6 +85,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Save to Database
+    if (!db) {
+      return NextResponse.json({ success: false, error: "Database not connected" }, { status: 500 });
+    }
+
     const newUser = await db.insert(users).values({
       name,
       email: `${imageId}@opsmind.local`, // Mock email since they didn't provide one

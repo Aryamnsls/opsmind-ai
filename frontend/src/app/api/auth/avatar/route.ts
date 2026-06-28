@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       response_format: "url",
     });
 
-    const avatarUrl = response.data[0].url;
+    const avatarUrl = response.data?.[0]?.url;
 
     if (avatarUrl) {
       if (db) await db.update(users).set({ avatarUrl }).where(eq(users.id, userId));
