@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (isFakeKey) {
       // Use a cool Hackathon fallback avatar
       const fallbackUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${userId}-${safeAge}&backgroundColor=f97316`;
-      await db.update(users).set({ avatarUrl: fallbackUrl }).where(eq(users.id, userId));
+      if (db) await db.update(users).set({ avatarUrl: fallbackUrl }).where(eq(users.id, userId));
       return NextResponse.json({ success: true, avatarUrl: fallbackUrl });
     }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const avatarUrl = response.data[0].url;
 
     if (avatarUrl) {
-      await db.update(users).set({ avatarUrl }).where(eq(users.id, userId));
+      if (db) await db.update(users).set({ avatarUrl }).where(eq(users.id, userId));
       return NextResponse.json({ success: true, avatarUrl });
     }
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Fallback if OpenAI fails (e.g. no credits, rate limit)
     if (userId) {
       const fallbackUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${userId}-fallback&backgroundColor=0ea5e9`;
-      await db.update(users).set({ avatarUrl: fallbackUrl }).where(eq(users.id, userId));
+      if (db) await db.update(users).set({ avatarUrl: fallbackUrl }).where(eq(users.id, userId));
       return NextResponse.json({ success: true, avatarUrl: fallbackUrl });
     }
     
