@@ -39,12 +39,34 @@ interface SimilarMatch {
 
 export default function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const incident = MOCK_INCIDENTS.find((i) => i.id === id);
+  
+  const [incident, setIncident] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const [similarMatches, setSimilarMatches] = useState<SimilarMatch[]>([]);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [resolved, setResolved] = useState(incident?.status === "resolved" || incident?.status === "closed");
+
+  // Fetch incident details from API (which queries DB or mock)
+  useEffect(() => {
+    fetch(`/api/incidents/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then(data => {
+        if (data.success && data.data) {
+          setIncident(data.data);
+          setResolved(data.data.status === "resolved" || data.data.status === "closed");
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   // Fetch similar incidents from the API
   useEffect(() => {
@@ -55,8 +77,8 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fingerprint: incident.dna.fingerprint,
-        errorSignatures: incident.dna.errorSignatures,
+        fingerprint: incident.dna?.fingerprint || "UNKNOWN",
+        errorSignatures: incident.dna?.errorSignatures || [],
         serviceName: incident.service,
       }),
     })
@@ -83,7 +105,15 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  if (!incident) {
+  if (loading) {
+    return (
+      <main className="min-h-screen p-6 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+      </main>
+    );
+  }
+
+  if (error || !incident) {
     return (
       <main className="min-h-screen p-6 flex items-center justify-center">
         <div className="text-center">
@@ -191,7 +221,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
             )}
           </div>
           <IncidentTimeline
-            events={incident.timeline}
+            events={incident.timeline || []}
             incidentId={incident.id}
             live={currentStatus === "active"}
           />
@@ -207,28 +237,28 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
             <div className="space-y-2 text-xs font-mono">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">fingerprint</span>
-                <span className="text-orange-400">{incident.dna.fingerprint}</span>
+                <span className="text-orange-400">{incident.dna?.fingerprint}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">cpu</span>
-                <span className={incident.dna.resourceUsage.cpu > 80 ? "text-red-400" : "text-green-400"}>
-                  {incident.dna.resourceUsage.cpu}%
+                <span className={(incident.dna?.cpuUsage ?? incident.dna?.resourceUsage?.cpu ?? 0) > 80 ? "text-red-400" : "text-green-400"}>
+                  {incident.dna?.cpuUsage ?? incident.dna?.resourceUsage?.cpu ?? "N/A"}%
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">memory</span>
-                <span className={incident.dna.resourceUsage.memory > 80 ? "text-red-400" : "text-green-400"}>
-                  {incident.dna.resourceUsage.memory}%
+                <span className={(incident.dna?.memoryUsage ?? incident.dna?.resourceUsage?.memory ?? 0) > 80 ? "text-red-400" : "text-green-400"}>
+                  {incident.dna?.memoryUsage ?? incident.dna?.resourceUsage?.memory ?? "N/A"}%
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">deploy</span>
-                <span className="text-slate-300 text-[10px] max-w-[120px] text-right">{incident.dna.deploymentMeta}</span>
+                <span className="text-slate-300 text-[10px] max-w-[120px] text-right">{incident.dna?.deploymentMeta || "N/A"}</span>
               </div>
-              {incident.dna.similarityScore && (
+              {incident.dna?.similarityScore && (
                 <div className="flex items-center justify-between pt-1 border-t border-white/5">
                   <span className="text-slate-500">similarity</span>
-                  <span className="text-green-400 font-semibold">{incident.dna.similarityScore}%</span>
+                  <span className="text-green-400 font-semibold">{incident.dna?.similarityScore}%</span>
                 </div>
               )}
             </div>
@@ -238,7 +268,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
           <div className="glass-card p-5">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Tags</p>
             <div className="flex flex-wrap gap-1.5">
-              {incident.tags.map((tag) => (
+              {(incident.tags || []).map((tag: string) => (
                 <span key={tag} className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 text-slate-400">
                   #{tag}
                 </span>
@@ -253,7 +283,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
               Infra Components
             </p>
             <div className="space-y-1.5">
-              {incident.dna.infraComponents.map((comp) => (
+              {(incident.dna?.infraComponents || []).map((comp: string) => (
                 <div key={comp} className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                   <span className="text-xs text-slate-300">{comp}</span>
@@ -309,9 +339,9 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
           <div className="glass-card p-6">
             <h2 className="text-base font-bold text-white mb-5">Live DNA™ Match</h2>
             <IncidentDNA
-              fingerprint={incident.dna.fingerprint}
-              errorSignatures={incident.dna.errorSignatures}
-              similarityScore={incident.dna.similarityScore ?? 94}
+              fingerprint={incident.dna?.fingerprint || "UNKNOWN"}
+              errorSignatures={incident.dna?.errorSignatures || []}
+              similarityScore={incident.dna?.similarityScore ?? 94}
               matchedIncident="INC-104"
               rootCause="Redis Memory Exhaustion — TTL misconfiguration"
               confidence={92}
