@@ -41,13 +41,25 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Global Toggle Button */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-[60] p-2 bg-slate-900 rounded-md border border-white/10 text-slate-300 hover:text-white shadow-lg"
-      >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Global Header (Toggle + Logo) */}
+      <div className="fixed top-4 left-4 z-[60] flex items-center gap-3">
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 bg-transparent hover:bg-white/5 rounded-md text-slate-300 hover:text-white transition-colors"
+        >
+          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        
+        {/* Logo (Visible when sidebar is closed) */}
+        {!isOpen && (
+          <Link href="/dashboard" className="flex items-center gap-2 group animate-in fade-in duration-300">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+              <Brain className="w-4 h-4 text-white" />
+            </div>
+            <p className="font-bold text-sm text-white leading-none">OpsMind AI</p>
+          </Link>
+        )}
+      </div>
 
       {/* Overlay */}
       {isOpen && (

@@ -47,6 +47,9 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 50 }).default("engineer"),
   teamId: integer("team_id").references(() => teams.id),
   avatarUrl: text("avatar_url"),
+  age: integer("age"),
+  gender: varchar("gender", { length: 20 }),
+  faceId: varchar("face_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

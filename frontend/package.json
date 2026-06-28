@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.1075.0",
     "@aws-sdk/client-s3": "^3.1075.0",
     "@clerk/nextjs": "^7.5.7",
     "@hookform/resolvers": "^5.4.0",
@@ -28,6 +29,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.79.0",
+    "react-webcam": "^7.2.0",
     "recharts": "^3.8.1",
     "shadcn": "^4.11.0",
     "tailwind-merge": "^3.6.0",
