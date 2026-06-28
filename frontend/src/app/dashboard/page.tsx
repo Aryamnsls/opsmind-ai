@@ -12,6 +12,8 @@ import {
   Plus,
   RefreshCw,
   Zap,
+  Loader2,
+  User
 } from "lucide-react";
 import { MetricCard } from "@/components/ui/dashboard/MetricCard";
 import { IncidentTimeline } from "@/components/ui/dashboard/IncidentTimeline";
@@ -26,13 +28,47 @@ export default function DashboardPage() {
   const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
-  // Authentication check
+  // Authentication check & avatar polling
   useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (!session) {
+    const sessionStr = localStorage.getItem("session");
+    if (!sessionStr) {
       router.push("/login");
+      return;
+    }
+    
+    const sessionUser = JSON.parse(sessionStr);
+    setUser(sessionUser);
+
+    // If avatar is missing, trigger generation and poll
+    if (!sessionUser.avatarUrl) {
+      let generationTriggered = false;
+
+      const interval = setInterval(async () => {
+        try {
+          if (!generationTriggered) {
+            generationTriggered = true;
+            // Trigger generation
+            fetch("/api/auth/avatar", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: sessionUser.id, age: sessionUser.age, gender: sessionUser.gender }),
+            }).catch(console.error);
+          }
+
+          const res = await fetch(`/api/auth/user?id=${sessionUser.id}`);
+          const data = await res.json();
+          if (data.success && data.user.avatarUrl) {
+            setUser(data.user);
+            localStorage.setItem("session", JSON.stringify(data.user));
+            clearInterval(interval);
+            window.dispatchEvent(new Event("storage")); 
+          }
+        } catch (e) {}
+      }, 3000);
+      return () => clearInterval(interval);
     }
   }, [router]);
 
@@ -82,7 +118,7 @@ export default function DashboardPage() {
             id="btn-refresh-dashboard"
             onClick={fetchIncidents}
             disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-slate-400 text-sm hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-slate-400 text-sm hover:bg-white/5 transition-colors disabled:opacity-50 hidden sm:flex"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
             {refreshing ? "Refreshing..." : "Refresh"}
@@ -92,8 +128,27 @@ export default function DashboardPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold hover:from-orange-400 hover:to-orange-500 transition-all shadow-lg shadow-orange-500/20"
           >
             <Plus className="w-4 h-4" />
-            New Incident
+            <span className="hidden sm:inline">New Incident</span>
           </Link>
+          
+          {/* AI Avatar Display */}
+          {user && (
+            <div className="ml-2 flex items-center gap-3 pl-3 border-l border-white/10">
+              <div className="text-right hidden md:block">
+                <p className="text-xs font-bold text-white">{user.name}</p>
+                <p className="text-[10px] text-sky-400 font-mono">DALL-E IDENTITY</p>
+              </div>
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-800 border border-white/20 shadow-xl shadow-sky-500/20 flex items-center justify-center">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="AI Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-sky-400 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin mb-0.5" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

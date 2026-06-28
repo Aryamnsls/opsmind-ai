@@ -161,12 +161,18 @@ function UserSection() {
   const [user, setUser] = useState<{name?: string, avatarUrl?: string} | null>(null);
 
   useEffect(() => {
-    try {
-      const session = localStorage.getItem("session");
-      if (session) {
-        setUser(JSON.parse(session));
-      }
-    } catch(e) {}
+    const updateSession = () => {
+      try {
+        const session = localStorage.getItem("session");
+        if (session) {
+          setUser(JSON.parse(session));
+        }
+      } catch(e) {}
+    };
+
+    updateSession();
+    window.addEventListener("storage", updateSession);
+    return () => window.removeEventListener("storage", updateSession);
   }, []);
 
   return (
