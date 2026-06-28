@@ -14,7 +14,10 @@ import {
   Swords,
   User,
   Zap,
+  Menu,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Activity, description: "Command Center" },
@@ -26,6 +29,7 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Hide sidebar on auth pages and landing page
   const isExcluded =
@@ -36,7 +40,24 @@ export function Sidebar() {
   if (isExcluded) return null;
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 sidebar-glass flex flex-col z-50 border-r border-white/8">
+    <>
+      {/* Mobile Toggle Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="md:hidden fixed top-4 right-4 z-[60] p-2 bg-slate-900 rounded-md border border-white/10 text-slate-300 hover:text-white shadow-lg"
+      >
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
+
+      <aside className={`fixed left-0 top-0 h-full w-64 sidebar-glass flex flex-col z-50 border-r border-white/8 transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
       {/* Logo */}
       <div className="p-5 border-b border-white/8">
         <Link href="/dashboard" className="flex items-center gap-3 group">
@@ -119,6 +140,7 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }
 
