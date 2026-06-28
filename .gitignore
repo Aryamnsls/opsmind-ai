@@ -1,0 +1,7 @@
+# Ignore AWS credentials and environment variables
+opsmind-app_accessKeys.csv
+.env
+.env.local
+.env.*
+node_modules/
+.next/
