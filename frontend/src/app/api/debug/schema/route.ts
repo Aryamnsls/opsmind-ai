@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { Pool } from "pg";
 
 export async function GET() {
   try {
-    if (!db) {
-      return NextResponse.json({ error: "No DB" }, { status: 500 });
-    }
-    const result = await db.execute(sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users';`);
-    return NextResponse.json({ columns: result.rows });
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+    });
+    const result = await pool.query(`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users';`);
+    await pool.end();
+    return NextResponse.json({ columns: result.rows, envUrl: !!process.env.DATABASE_URL });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, stack: error.stack, envUrl: !!process.env.DATABASE_URL }, { status: 500 });
   }
 }
