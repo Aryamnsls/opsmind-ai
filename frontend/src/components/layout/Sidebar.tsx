@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Activity, description: "Command Center" },
+  { href: "/scanner", label: "Live Scanner", icon: Zap, description: "Auto-Ingest Targets" },
   { href: "/incidents", label: "Incidents", icon: AlertTriangle, description: "Manage Incidents" },
   { href: "/knowledge", label: "Knowledge Base", icon: BookOpen, description: "Incident Memory" },
   { href: "/war-room", label: "AI War Room", icon: Swords, description: "Live Collaboration" },
