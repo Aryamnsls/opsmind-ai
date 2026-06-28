@@ -17,7 +17,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Activity, description: "Command Center" },
@@ -156,17 +156,31 @@ export function Sidebar() {
   );
 }
 
-// Separate client component that safely tries Clerk, falls back to static UI
+// Dynamic User section that reads from localStorage
 function UserSection() {
-  // Safe static fallback — works with or without Clerk
+  const [user, setUser] = useState<{name?: string, avatarUrl?: string} | null>(null);
+
+  useEffect(() => {
+    try {
+      const session = localStorage.getItem("session");
+      if (session) {
+        setUser(JSON.parse(session));
+      }
+    } catch(e) {}
+  }, []);
+
   return (
     <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white/3">
-      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500/40 to-sky-500/40 border border-white/15 flex items-center justify-center">
-        <User className="w-3.5 h-3.5 text-white" />
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/40 to-sky-500/40 border border-white/15 flex items-center justify-center overflow-hidden shrink-0">
+        {user?.avatarUrl ? (
+          <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+        ) : (
+          <User className="w-4 h-4 text-white" />
+        )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-slate-300 font-medium truncate">SRE Engineer</p>
-        <p className="text-[10px] text-slate-500 truncate">OpsMind AI Team</p>
+        <p className="text-[11px] text-slate-300 font-medium truncate">{user?.name || "Authenticating..."}</p>
+        <p className="text-[10px] text-sky-400 font-bold tracking-widest truncate">{user?.avatarUrl ? "AI AVATAR SYNCED" : "AI SCANNING..."}</p>
       </div>
       <div className="w-2 h-2 rounded-full bg-green-400" />
     </div>

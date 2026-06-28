@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   AlertTriangle,
@@ -25,6 +26,15 @@ export default function DashboardPage() {
   const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const router = useRouter();
+
+  // Authentication check
+  useEffect(() => {
+    const session = localStorage.getItem("session");
+    if (!session) {
+      router.push("/login");
+    }
+  }, [router]);
 
   const fetchIncidents = useCallback(async () => {
     setRefreshing(true);

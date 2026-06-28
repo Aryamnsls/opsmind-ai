@@ -33,6 +33,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success && data.recognized) {
+        localStorage.setItem("session", JSON.stringify(data.user));
         setStatus("success");
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
@@ -62,7 +63,16 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success) {
+        localStorage.setItem("session", JSON.stringify(data.user));
         setStatus("success");
+        
+        // Trigger Avatar Generation in the background
+        fetch("/api/auth/avatar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: data.user.id, age: userProfile.age, gender: userProfile.gender }),
+        }).catch(err => console.error("Avatar error:", err));
+
         setTimeout(() => router.push("/dashboard"), 1500);
       } else {
         setStatus("error");
