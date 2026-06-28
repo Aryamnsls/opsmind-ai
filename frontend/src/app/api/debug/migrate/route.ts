@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { Client } from "pg";
 
 export async function GET() {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+  
   try {
-    if (!db) {
-      return NextResponse.json({ error: "No DB" }, { status: 500 });
-    }
-    
-    // Attempt to add the missing columns. We use IF NOT EXISTS to avoid errors if they already exist.
-    await db.execute(sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "age" integer;`);
-    await db.execute(sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "gender" varchar(20);`);
-    await db.execute(sql`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "face_id" varchar(255);`);
-    
-    return NextResponse.json({ success: true, message: "Columns added successfully to production DB!" });
+    await client.connect();
+    const result = await client.query('SELECT 1 as connected');
+    await client.end();
+    return NextResponse.json({ success: true, result: result.rows });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      errorName: error.name,
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorStack: error.stack
+    }, { status: 500 });
   }
 }
